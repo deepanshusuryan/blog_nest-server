@@ -48,8 +48,8 @@ export async function getNote(req, res) {
 
 export async function updateNote(req, res) {
     try {
-        const { title, description } = req.body;
-        const updatedNote = await Note.findByIdAndUpdate(req.params.id, { title, description }, { new: true });
+        const { title, description, id } = req.body;
+        const updatedNote = await Note.findByIdAndUpdate(id, { title, description }, { new: true });
 
         if (!updatedNote) {
             return res.status(404).json({ message: "Note not found", success: false })

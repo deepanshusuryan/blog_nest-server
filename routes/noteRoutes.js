@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/create", isAuthenticated, createNote);
 router.get("/allnotes", isAuthenticated, getNotes);
 router.get("/getnote/:id", isAuthenticated, getNote);
-router.put("/update/:id", isAuthenticated, updateNote);
+router.put("/update", isAuthenticated, updateNote);
 router.delete("/delete/:id", isAuthenticated, deleteNote);
 
 export { router as noteRouter }
