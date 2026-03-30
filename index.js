@@ -7,14 +7,17 @@ import cors from "cors";
 
 dotenv.config();
 databaseConnection();
-const port=process.env.PORT;
-const app=express();
+const port = process.env.PORT;
+const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+}));
 app.use(express.json());
-app.use("/api/user",userRouter);
-app.use("/api/note",noteRouter);
+app.use("/api/user", userRouter);
+app.use("/api/note", noteRouter);
 
-app.listen(8000,()=>{
+app.listen(8000, () => {
     console.log(`App listening on port ${port}`)
 })

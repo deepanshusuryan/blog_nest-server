@@ -7,7 +7,7 @@ export async function createUser(req, res) {
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
-            return res.status(400).json({ message: "All fields are rwquired", success: false })
+            return res.status(400).json({ message: "All fields are required", success: false })
         }
         const hashPassword = await bcrypt.hash(password, 10);
 
@@ -55,7 +55,7 @@ export async function loginUser(req, res) {
 
         const accessToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "15m" })
 
-        const refreshToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" })
+        const refreshToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "2d" })
 
         user.refreshToken = refreshToken;
         await user.save();
@@ -63,7 +63,7 @@ export async function loginUser(req, res) {
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 2 * 24 * 60 * 60 * 1000
         })
 
         return res.status(200).json({ message: "Login successful", success: true, accessToken: accessToken })
@@ -86,7 +86,9 @@ export async function refreshAccessToken(req, res) {
             return res.status(403).json({ message: "Invalid refresh token", success: false });
         }
 
-        const newAccessToken = jwt.sign({ email: user?.email, id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "15m" })
+        const newAccessToken = jwt.sign({ email: user?.email, id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "15m" });
+        
+        return res.status(200).json({ success: true, accessToken: newAccessToken });
 
     } catch (error) {
         console.log(error);

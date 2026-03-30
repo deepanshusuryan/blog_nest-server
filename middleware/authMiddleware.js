@@ -16,4 +16,4 @@ export async function isAuthenticated(req, res, next) {
         console.log("Auth error", error);
         return res.status(401).json({ message: "Unauthorized Access, jwt token wrong or expired" });
     }
-}   
+}
