@@ -66,7 +66,7 @@ export async function loginUser(req, res) {
             maxAge: 2 * 24 * 60 * 60 * 1000
         })
 
-        return res.status(200).json({ message: "Login successful", success: true, accessToken: accessToken })
+        return res.status(200).json({ message: "Login successful", success: true, accessToken: accessToken, user:user })
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })
@@ -103,10 +103,15 @@ export async function logoutUser(req, res) {
             return res.status(204).send(); // already logged out
         }
         const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
         await User.findByIdAndUpdate(decoded.id, { refreshToken: null });
+
         res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
+
         return res.status(200).json({ message: "Logged out successfully", success: true });
+        
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })
     }
 }

@@ -4,6 +4,7 @@ import { userRouter } from "./routes/userRoutes.js";
 import { noteRouter } from "./routes/noteRoutes.js";
 import dotenv from "dotenv";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 databaseConnection();
@@ -14,7 +15,9 @@ app.use(cors({
     origin: "http://localhost:3000",
     credentials: true,
 }));
+app.use(cookieParser());
 app.use(express.json());
+
 app.use("/api/user", userRouter);
 app.use("/api/note", noteRouter);
 
