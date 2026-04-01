@@ -4,15 +4,26 @@ import jwt from "jsonwebtoken";
 
 export async function createUser(req, res) {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, contact } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "All fields are required", success: false })
         }
+
+        const emailExistingUser = await User.findOne({ email });
+        if (emailExistingUser) {
+            return res.status(400).send({ message: "User with this email already exists", success: false })
+        }
+
+        const contactExistingUser= await User.findOne({contact});
+        if(contactExistingUser){
+            return res.status(400).send({message:"Contact number is already linked with another account", success:false})
+        }
+
         const hashPassword = await bcrypt.hash(password, 10);
 
         const newUser = await User.create({
-            name, email, password: hashPassword
+            name, email, password: hashPassword, contact
         })
 
         return res.status(201).json({ message: "User created Successfully", success: true, newUser })
@@ -66,7 +77,7 @@ export async function loginUser(req, res) {
             maxAge: 2 * 24 * 60 * 60 * 1000
         })
 
-        return res.status(200).json({ message: "Login successful", success: true, accessToken: accessToken, user:user })
+        return res.status(200).json({ message: "Login successful", success: true, accessToken: accessToken, user: user })
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })
@@ -87,7 +98,7 @@ export async function refreshAccessToken(req, res) {
         }
 
         const newAccessToken = jwt.sign({ email: user?.email, id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "15m" });
-        
+
         return res.status(200).json({ success: true, accessToken: newAccessToken });
 
     } catch (error) {
@@ -109,7 +120,7 @@ export async function logoutUser(req, res) {
         res.clearCookie("refreshToken", { httpOnly: true, sameSite: "strict" });
 
         return res.status(200).json({ message: "Logged out successfully", success: true });
-        
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })

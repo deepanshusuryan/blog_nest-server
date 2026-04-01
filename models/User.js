@@ -14,6 +14,11 @@ const userSchema=new mongoose.Schema({
         type: String,
         required: true
     },
+    contact:{
+        type:String,
+        required: true,
+        unique:true
+    },
     refreshToken:{
         type:String,
         default: null
