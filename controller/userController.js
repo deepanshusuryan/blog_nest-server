@@ -6,7 +6,7 @@ export async function createUser(req, res) {
     try {
         const { name, email, password, contact } = req.body;
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !contact) {
             return res.status(400).json({ message: "All fields are required", success: false })
         }
 
@@ -15,9 +15,9 @@ export async function createUser(req, res) {
             return res.status(400).send({ message: "User with this email already exists", success: false })
         }
 
-        const contactExistingUser= await User.findOne({contact});
-        if(contactExistingUser){
-            return res.status(400).send({message:"Contact number is already linked with another account", success:false})
+        const contactExistingUser = await User.findOne({ contact });
+        if (contactExistingUser) {
+            return res.status(400).send({ message: "Contact number is already linked with another account", success: false })
         }
 
         const hashPassword = await bcrypt.hash(password, 10);
@@ -44,6 +44,58 @@ export async function getUser(req, res) {
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })
+    }
+}
+
+export async function updateUser(req, res) {
+    try {
+        const { name, email, contact, id } = req.body;
+
+        // Check if user exists
+        const user = await User.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        // If contact is being updated, check it's not taken by another user
+        if (contact && contact !== user.contact) {
+            const contactExists = await User.findOne({ contact });
+            if (contactExists) {
+                return res.status(400).json({
+                    message: "Contact number is already linked with another account",
+                    success: false
+                });
+            }
+        }
+
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) {
+                return res.status(400).json({
+                    message: "Email is already linked with another account",
+                    success: false
+                });
+            }
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            { name, email, contact },
+            {
+                new: true,
+                runValidators: true,    // ✅ run mongoose validators
+            }
+        )
+
+        return res.status(200).json({
+            message: "User updated successfully",
+            success: true,
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal server error", success: false });
     }
 }
 
