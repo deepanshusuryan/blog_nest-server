@@ -5,6 +5,7 @@ import { blogRouter } from "./routes/blogRoutes.js";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { categoryRoutes } from "./routes/blogCategoryRoutes.js";
 
 dotenv.config();
 databaseConnection();
@@ -20,6 +21,7 @@ app.use(express.json());
 
 app.use("/api/user", userRouter);
 app.use("/api/note", blogRouter);
+app.use("/api/category", categoryRoutes);
 
 app.listen(8000, () => {
     console.log(`App listening on port ${port}`)

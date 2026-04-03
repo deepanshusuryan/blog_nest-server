@@ -8,6 +8,10 @@ const noteSchema=new mongoose.Schema({
         type:String,
         required: true
     },
+    blogCategory:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"BlogCategory"
+    }],
     userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
