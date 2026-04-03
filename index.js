@@ -1,7 +1,7 @@
 import express from "express";
 import databaseConnection from "./db/databaseConnection.js";
 import { userRouter } from "./routes/userRoutes.js";
-import { noteRouter } from "./routes/noteRoutes.js";
+import { blogRouter } from "./routes/blogRoutes.js";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -19,7 +19,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/user", userRouter);
-app.use("/api/note", noteRouter);
+app.use("/api/note", blogRouter);
 
 app.listen(8000, () => {
     console.log(`App listening on port ${port}`)
