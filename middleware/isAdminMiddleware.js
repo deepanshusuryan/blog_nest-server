@@ -11,7 +11,7 @@ export async function isSuperAdmin(req, res, next) {
             return res.status(404).json({ message: "User not found", success: false });
         }
 
-        if (!user.isSuperAdmin) {
+        if (user.role !== "super_admin") {
             return res.status(403).json({ message: "Access denied. Super admin only.", success: false });
         }
 

@@ -23,10 +23,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    isSuperAdmin: {
-        type: Boolean,
-        sparse: true,
-    },
+    role: {
+        type: String,
+        enum: ["user", "super_admin", "admin"],
+        default: "user"
+    }
 }, { timestamps: true })
 
 const User = mongoose.model("User", userSchema);

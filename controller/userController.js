@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 export async function createUser(req, res) {
     try {
@@ -49,15 +50,22 @@ export async function getUser(req, res) {
 
 export async function updateUser(req, res) {
     try {
-        const { name, email, contact, id } = req.body;
+        const id = req.params.id;
+        const { name, email, contact } = req.body;
 
-        // Check if user exists
+        if (!id) {
+            return res.status(400).json({ message: "Id is required to update", success: false })
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid ID", success: false });
+        }
+
         const user = await User.findById(id);
         if (!user) {
             return res.status(404).json({ message: "User not found", success: false });
         }
 
-        // If contact is being updated, check it's not taken by another user
         if (contact && contact !== user.contact) {
             const contactExists = await User.findOne({ contact });
             if (contactExists) {
@@ -83,7 +91,7 @@ export async function updateUser(req, res) {
             { name, email, contact },
             {
                 new: true,
-                runValidators: true,    // ✅ run mongoose validators
+                runValidators: true,
             }
         )
 
@@ -163,7 +171,7 @@ export async function logoutUser(req, res) {
     try {
         const token = req.cookies.refreshToken;
         if (!token) {
-            return res.status(204).send(); // already logged out
+            return res.status(204).send();
         }
         const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
 
