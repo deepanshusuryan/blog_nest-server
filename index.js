@@ -13,7 +13,7 @@ const port = process.env.PORT;
 const app = express();
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.NEXT_PUBLIC_FRONTEND_URL,
     credentials: true,
 }));
 app.use(cookieParser());
@@ -23,6 +23,6 @@ app.use("/api/user", userRouter);
 app.use("/api/note", blogRouter);
 app.use("/api/category", categoryRoutes);
 
-app.listen(8000, () => {
+app.listen(port, () => {
     console.log(`App listening on port ${port}`)
 })

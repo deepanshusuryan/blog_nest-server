@@ -9,7 +9,8 @@ export async function isAuthenticated(req, res, next) {
         if (!auth) {
             return res.status(401).json({ message: "Unauthorized Access , access token is required" })
         }
-        const decoded = jwt.verify(auth, process.env.JWT_ACCESS_SECRET);
+        const token = auth.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
         req.user = decoded;
         next();
     } catch (error) {

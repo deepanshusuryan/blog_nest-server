@@ -5,10 +5,15 @@ import mongoose from "mongoose";
 
 export async function createUser(req, res) {
     try {
-        const { name, email, password, contact } = req.body;
+        const { name, email, password, contact, username } = req.body;
 
-        if (!name || !email || !password || !contact) {
+        if (!name || !email || !password || !contact || !username) {
             return res.status(400).json({ message: "All fields are required", success: false })
+        }
+
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername) {
+            return res.status(400).json({ message: "User with this username alreday exist", success: false })
         }
 
         const emailExistingUser = await User.findOne({ email });
@@ -24,13 +29,41 @@ export async function createUser(req, res) {
         const hashPassword = await bcrypt.hash(password, 10);
 
         const newUser = await User.create({
-            name, email, password: hashPassword, contact
+            name, email, password: hashPassword, contact, username
         })
 
         return res.status(201).json({ message: "User created Successfully", success: true, newUser })
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Internal server error", success: false })
+    }
+}
+
+export async function checkUsername(req, res) {
+    try {
+        const { username } = req.query;
+
+        if (!username) {
+            return res.status(400).json({ message: "Username is required", available: false });
+        }
+
+        const existingUser = await User.findOne({ username: username.toLowerCase() });
+
+        if (!existingUser) {
+            return res.json({ available: true });
+        }
+
+        const suggestions = [
+            username + Math.floor(Math.random() * 1000),
+            username + "_official",
+            username + "_blog"
+        ];
+
+        return res.json({ available: false, suggestions });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Internal server error", available: false });
     }
 }
 
@@ -51,7 +84,7 @@ export async function getUser(req, res) {
 export async function updateUser(req, res) {
     try {
         const id = req.params.id;
-        const { name, email, contact } = req.body;
+        const { name, email, contact, username } = req.body;
 
         if (!id) {
             return res.status(400).json({ message: "Id is required to update", success: false })
@@ -66,40 +99,37 @@ export async function updateUser(req, res) {
             return res.status(404).json({ message: "User not found", success: false });
         }
 
+        if (username && username !== user.username) {
+            const usernameExists = await User.findOne({ username });
+            if (usernameExists) {
+                return res.status(400).json({ message: "Username is already taken by another user", success: false });
+            }
+        }
+
         if (contact && contact !== user.contact) {
             const contactExists = await User.findOne({ contact });
             if (contactExists) {
-                return res.status(400).json({
-                    message: "Contact number is already linked with another account",
-                    success: false
-                });
+                return res.status(400).json({ message: "Contact number is already linked with another account", success: false });
             }
         }
 
         if (email && email !== user.email) {
             const emailExists = await User.findOne({ email });
             if (emailExists) {
-                return res.status(400).json({
-                    message: "Email is already linked with another account",
-                    success: false
-                });
+                return res.status(400).json({ message: "Email is already linked with another account", success: false });
             }
         }
 
         const updatedUser = await User.findByIdAndUpdate(
             id,
-            { name, email, contact },
+            { name, email, contact, username },
             {
                 new: true,
                 runValidators: true,
             }
         )
 
-        return res.status(200).json({
-            message: "User updated successfully",
-            success: true,
-            user: updatedUser
-        });
+        return res.status(200).json({ message: "User updated successfully", success: true, user: updatedUser });
 
     } catch (error) {
         console.log(error);
@@ -109,14 +139,16 @@ export async function updateUser(req, res) {
 
 export async function loginUser(req, res) {
     try {
-        const { email, password } = req.body;
-        if (!email || !password) {
+        const { identifier, password } = req.body;
+        if (!identifier || !password) {
             return res.status(400).json({ message: "All fields are required", success: false })
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({
+            $or: [{ email: identifier }, { username: identifier }]
+        });
         if (!user) {
-            return res.status(404).json({ message: "Email not registered", success: false });
+            return res.status(404).json({ message: "User not found", success: false });
         }
 
         const isPasswordMatch = await bcrypt.compare(password, user.password);
@@ -126,7 +158,7 @@ export async function loginUser(req, res) {
 
         const accessToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_ACCESS_SECRET, { expiresIn: "15m" })
 
-        const refreshToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "2d" })
+        const refreshToken = jwt.sign({ email: user.email, id: user._id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "1d" })
 
         user.refreshToken = refreshToken;
         await user.save();
