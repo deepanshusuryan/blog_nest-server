@@ -6,6 +6,9 @@ const blogCategorySchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    description:{
+        type:String,
+    },
     isActive: {
         type: Boolean,
         default: true

@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 export async function createCategory(req, res) {
     try {
-        const { name } = req.body;
+        const { name, description } = req.body;
         if (!name) {
             return res.status(400).json({ message: "Blog Category name is required", success: false });
         }
@@ -17,6 +17,7 @@ export async function createCategory(req, res) {
 
         const newCategory = await BlogCategory.create({
             name: name,
+            description: description,
             isActive: true
         })
 
@@ -30,12 +31,29 @@ export async function createCategory(req, res) {
 
 export async function getCategories(req, res) {
     try {
-        const categories = await BlogCategory.find({});
-        if (!categories.length === 0) {
-            return res.status(400).json({ message: "Categories not found", success: false });
+        const { page = 1, limit = 10, search = "", isActive, sortBy = "createdAt", order = "desc" } = req.query;
+        const query = {};
+
+        if (search.trim()) {
+            query.name = { $regex: search.trim(), $options: "i" };
         }
 
-        return res.status(200).json({ message: "Categories fetched successfully", success: true, categories });
+        if (isActive !== undefined && isActive !== "") {
+            query.isActive = isActive === "true";
+        }
+
+        const sortOrder = order === "asc" ? 1 : -1;
+        const skip = (Number(page) - 1) * Number(limit);
+
+        const [categories, total] = await Promise.all([
+            BlogCategory.find(query)
+                .sort({ [sortBy]: sortOrder })
+                .skip(skip)
+                .limit(Number(limit)),
+            BlogCategory.countDocuments(query),
+        ]);
+
+        return res.status(200).json({ message: "Categories fetched successfully", success: true, categories, total, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
 
     } catch (error) {
         console.log(error);
@@ -61,7 +79,8 @@ export async function getCategory(req, res) {
 
 export async function updateCategory(req, res) {
     try {
-        const { id, name } = req.body;
+        const id = req.params.id;
+        const { name, description } = req.body;
         if (!id || !name) {
             return res.status(400).json({ message: "Id and Name is required", success: false })
         }
@@ -75,11 +94,17 @@ export async function updateCategory(req, res) {
             return res.status(404).json({ message: "Category not found", success: false });
         }
 
+        const existingCategory = await BlogCategory.findOne({ name: { $regex: `^${name}$`, $options: "i" }, _id: { $ne: id } });
+        if (existingCategory) {
+            return res.status(400).json({ message: "Two categories cannot have same name", success: false });
+        }
+
         const updatedCategory = await BlogCategory.findByIdAndUpdate(id, {
-            name: name
+            name: name,
+            description: description
         }, { new: true })
 
-        return res.status(200).json({ message: "Blog Category Updated", success: true, updateCategory })
+        return res.status(200).json({ message: "Blog Category Updated", success: true, updatedCategory })
 
     } catch (error) {
         console.log(error);
@@ -95,6 +120,10 @@ export async function toggleCategoryStatus(req, res) {
             return res.status(400).json({ message: "Blog Category ID is required", success: false });
         }
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid ID", success: false });
+        }
+
         const category = await BlogCategory.findById(id);
 
         if (!category) {
@@ -104,7 +133,7 @@ export async function toggleCategoryStatus(req, res) {
         category.isActive = !category.isActive;
         await category.save();
 
-        return res.status(200).json({ message: "Blog Category deleted successfully", success: true });
+        return res.status(200).json({ message: "Blog Category deactivated successfully", success: true });
 
     } catch (error) {
         console.log(error);

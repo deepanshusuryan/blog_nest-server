@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.post("/create", isAuthenticated, isSuperAdmin, createCategory);
 router.get("/getcategories", isAuthenticated, getCategories);
-router.get("/getcategory", isAuthenticated, isSuperAdmin, getCategory);
-router.put("/update", isAuthenticated, isSuperAdmin, updateCategory);
-router.put("/status", isAuthenticated, isSuperAdmin, toggleCategoryStatus);
+router.get("/:id", isAuthenticated, isSuperAdmin, getCategory);
+router.put("/:id", isAuthenticated, isSuperAdmin, updateCategory);
+router.put("/toggle-status/:id", isAuthenticated, isSuperAdmin, toggleCategoryStatus);
 
 export {router as categoryRoutes}
