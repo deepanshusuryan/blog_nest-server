@@ -5,7 +5,7 @@ import { isAuthenticated } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 router.post("/create", isAuthenticated, createBlog);
-router.get("/allblogs", isAuthenticated, getBlogs);
+router.get("/getblogs", isAuthenticated, getBlogs);
 router.get("/getblog/:id", isAuthenticated, getBlog);
 router.put("/update", isAuthenticated, updateBlog);
 router.delete("/delete/:id", isAuthenticated, deleteBlog);

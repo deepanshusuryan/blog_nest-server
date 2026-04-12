@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 
-const noteSchema=new mongoose.Schema({
+const blogSchema=new mongoose.Schema({
     title:{
         type: String,
+        required: true
     },
     description:{
         type:String,
         required: true
+    },
+    blogType:{
+        type:String,
+        enum:["public", "private"],
+        default: "public"
     },
     blogCategory:[{
         type:mongoose.Schema.Types.ObjectId,
@@ -19,6 +25,6 @@ const noteSchema=new mongoose.Schema({
     }
 }, {timestamps:true})
 
-const Blog=mongoose.model("Blog",noteSchema);
+const Blog=mongoose.model("Blog",blogSchema);
 
 export default Blog;

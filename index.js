@@ -20,7 +20,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/user", userRouter);
-app.use("/api/note", blogRouter);
+app.use("/api/blog", blogRouter);
 app.use("/api/category", categoryRoutes);
 
 app.listen(port, () => {
