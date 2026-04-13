@@ -13,7 +13,10 @@ const port = process.env.PORT;
 const app = express();
 
 app.use(cors({
-    origin: process.env.NEXT_PUBLIC_FRONTEND_URL,
+    origin:[
+        // process.env.NEXT_PUBLIC_FRONTEND_URL,
+        "http://localhost:3000"
+    ],
     credentials: true,
 }));
 app.use(cookieParser());
