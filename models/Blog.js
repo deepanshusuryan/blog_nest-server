@@ -22,6 +22,10 @@ const blogSchema=new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"User",
         required: true
+    },
+    isActive:{
+        type:Boolean,
+        required:true,
     }
 }, {timestamps:true})
 
