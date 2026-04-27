@@ -53,6 +53,16 @@ export async function getBlogs(req, res) {
 
         const blogs = await Blog.aggregate([
             {
+                $match: {
+                    blogType: type,
+                    $or: [
+                        { isActive: true },
+                        { isActive: { $exists: false } }
+                    ]
+                }
+            },
+
+            {
                 $lookup: {
                     from: "blogcategories",
                     localField: "blogCategory",
@@ -61,16 +71,36 @@ export async function getBlogs(req, res) {
                 }
             },
             {
-                $match: {
-                    ...filter,
-                    ...(search && {
+                $unwind: {
+                    path: "$categoryDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            ...(search
+                ? [{
+                    $match: {
                         $or: [
                             { title: { $regex: search, $options: "i" } },
                             { "categoryDetails.name": { $regex: search, $options: "i" } }
                         ]
-                    })
+                    }
+                }]
+                : []),
+
+            {
+                $group: {
+                    _id: "$_id",
+                    title: { $first: "$title" },
+                    description: { $first: "$description" },
+                    blogType: { $first: "$blogType" },
+                    userId: { $first: "$userId" },
+                    createdAt: { $first: "$createdAt" },
+                    updatedAt: { $first: "$updatedAt" },
+                    categoryDetails: { $push: "$categoryDetails" }
                 }
             },
+
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
@@ -93,7 +123,15 @@ export async function getBlogs(req, res) {
 
 export async function getBlog(req, res) {
     try {
-        const blog = await Blog.findOne({ _id: req.params.id, isActive: true });
+        const blog = await Blog.findOne({ _id: req.params.id, isActive: true })
+            .populate({
+                path: "userId",
+                select: "name"
+            })
+            .populate({
+                path: "blogCategory",
+                select: "name"
+            });
         if (!blog) {
             return res.status(404).json({ message: "Blog not found", success: false });
         }
