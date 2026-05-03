@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    savedBlogs:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Blog"
+    }],
     refreshToken: {
         type: String,
         default: null

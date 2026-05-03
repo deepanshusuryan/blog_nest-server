@@ -23,6 +23,10 @@ const blogSchema=new mongoose.Schema({
         ref:"User",
         required: true
     },
+    likes:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
     isActive:{
         type:Boolean,
         required:true,

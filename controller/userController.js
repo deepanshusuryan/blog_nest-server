@@ -69,15 +69,97 @@ export async function checkUsername(req, res) {
 
 export async function getUser(req, res) {
     try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found", success: false })
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid user id", success: false });
         }
 
-        return res.status(200).json({ message: "User fetched successfully", success: true, user })
+        const user = await User.aggregate([
+            {
+                $match: { _id: new mongoose.Types.ObjectId(id) }
+            },
+            {
+                $lookup: {
+                    from: "blogs",
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$userId", "$$userId"] },
+                                        { $eq: ["$blogType", "public"] },
+                                        { $eq: ["$isActive", true] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $count: "totalPublishedBlogs" }
+                    ],
+                    as: "blogStats"
+                }
+            },
+            {
+                $lookup: {
+                    from: "blogs",
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$userId", "$$userId"] },
+                                        { $eq: ["$blogType", "public"] },
+                                        { $eq: ["$isActive", true] }
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            $project: {
+                                likesCount: { $size: { $ifNull: ["$likes", []] } }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                totalLikes: { $sum: "$likesCount" }
+                            }
+                        }
+                    ],
+                    as: "likesStats"
+                }
+            },
+            {
+                $addFields: {
+                    totalPublishedBlogs: {
+                        $ifNull: [{ $arrayElemAt: ["$blogStats.totalPublishedBlogs", 0] }, 0]
+                    },
+                    totalLikesReceived: {
+                        $ifNull: [{ $arrayElemAt: ["$likesStats.totalLikes", 0] }, 0]
+                    }
+                }
+            },
+            {
+                $project: {
+                    password: 0,
+                    refreshToken: 0,
+                    blogStats: 0,
+                    likesStats: 0,
+                }
+            }
+        ]);
+
+        if (!user.length) {
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        return res.status(200).json({ success: true, message: "User fetched successfully", user: user[0] });
+
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ message: "Internal server error", success: false })
+        return res.status(500).json({ message: "Internal server error", success: false });
     }
 }
 
@@ -124,7 +206,7 @@ export async function updateUser(req, res) {
             id,
             { name, email, contact, username },
             {
-                new: true,
+                returnDocument: 'after',
                 runValidators: true,
             }
         )
