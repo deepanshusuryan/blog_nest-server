@@ -162,19 +162,39 @@ export async function getBlogs(req, res) {
 export async function getBlog(req, res) {
     try {
         const blog = await Blog.findOne({ _id: req.params.id, isActive: true })
-            .populate({
-                path: "userId",
-                select: "name"
-            })
-            .populate({
-                path: "blogCategory",
-                select: "name"
-            });
+            .populate({ path: "userId", select: "name" })
+            .populate({ path: "blogCategory", select: "name" });
+
         if (!blog) {
             return res.status(404).json({ message: "Blog not found", success: false });
         }
 
-        return res.status(200).json({ message: "Blog fetched successfully", success: true, data: blog });
+        let isLiked = false;
+        let isSaved = false;
+
+        if (req.user?.id) {
+            isLiked = blog.likes?.some(
+                (id) => id.toString() === req.user.id.toString()
+            );
+
+            const currentUser = await User.findById(req.user.id).select("savedBlogs");
+            isSaved = currentUser?.savedBlogs?.some(
+                (id) => id.toString() === blog._id.toString()
+            ) || false;
+        }
+
+        const blogData = blog.toObject();
+
+        return res.status(200).json({
+            message: "Blog fetched successfully",
+            success: true,
+            data: {
+                ...blogData,
+                isLiked,
+                isSaved,
+                likesCount: blog.likes?.length || 0,
+            }
+        });
 
     } catch (error) {
         console.log(error);
@@ -209,11 +229,11 @@ export async function updateBlog(req, res) {
             return res.status(403).json({ message: "You are not authorized to edit this blog", success: false });
         }
 
-        const hoursSinceCreation = (Date.now() - new Date(blog.createdAt).getTime()) / (1000 * 60 * 60);
+        // const hoursSinceCreation = (Date.now() - new Date(blog.createdAt).getTime()) / (1000 * 60 * 60);
 
-        if (hoursSinceCreation > 24) {
-            return res.status(403).json({ message: "Blog can only be edited within 24 hours of creation", success: false });
-        }
+        // if (hoursSinceCreation > 24) {
+        //     return res.status(403).json({ message: "Blog can only be edited within 24 hours of creation", success: false });
+        // }
 
         const validTypes = ["public", "private"];
         const finalBlogType = blogType && validTypes.includes(blogType) ? blogType : blog.blogType;
