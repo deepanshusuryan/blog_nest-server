@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { categoryRoutes } from "./routes/blogCategoryRoutes.js";
+import { commentRouter } from "./routes/commentRoutes.js";
 
 dotenv.config();
 databaseConnection();
@@ -24,6 +25,7 @@ app.use(express.json());
 
 app.use("/api/user", userRouter);
 app.use("/api/blog", blogRouter);
+app.use("/api/comment",commentRouter);
 app.use("/api/category", categoryRoutes);
 
 app.listen(port, () => {
