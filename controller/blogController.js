@@ -229,12 +229,6 @@ export async function updateBlog(req, res) {
             return res.status(403).json({ message: "You are not authorized to edit this blog", success: false });
         }
 
-        // const hoursSinceCreation = (Date.now() - new Date(blog.createdAt).getTime()) / (1000 * 60 * 60);
-
-        // if (hoursSinceCreation > 24) {
-        //     return res.status(403).json({ message: "Blog can only be edited within 24 hours of creation", success: false });
-        // }
-
         const validTypes = ["public", "private"];
         const finalBlogType = blogType && validTypes.includes(blogType) ? blogType : blog.blogType;
 
